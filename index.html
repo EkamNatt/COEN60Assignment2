@@ -16,6 +16,16 @@
             stroke: black;
             stroke-width: 1;
         }
+
+        .label {
+            fill: black;
+            font-size: 12px;
+        }
+
+        .highlight {
+            stroke: red;
+            stroke-width: 2;
+        }
     </style>
 </head>
 
@@ -86,7 +96,17 @@
                         .attr("x", xPosition)
                         .attr("width", xScale(hours))
                         .attr("height", yScale.bandwidth())
-                        .attr("fill", activityColors[activity]);
+                        .attr("fill", activityColors[activity])
+                        .classed("highlight", activity === "study" || activity === "play"); // Randomly highlight "study" and "play"
+
+                    // Add text for activity
+                    d3.select(this).append("text")
+                        .attr("x", xPosition + 5) // Small padding
+                        .attr("y", yScale.bandwidth() / 2)
+                        .attr("dy", ".35em")
+                        .attr("fill", "black")
+                        .attr("font-size", 10)
+                        .text(activity);
 
                     xPosition += xScale(hours);
                 }
@@ -119,38 +139,36 @@
         }
 
         // Display the bar chart
+        const barYScale = d3.scaleBand()
+            .domain(averageHours.map(d => d.activity))
+            .range([0, 400])
+            .padding(0.1);
 
-// Display the bar chart
-const barYScale = d3.scaleBand()
-    .domain(averageHours.map(d => d.activity))
-    .range([0, 400])
-    .padding(0.1);
+        const barXScale = d3.scaleLinear()
+            .domain([0, d3.max(averageHours, d => d.average)])
+            .range([0, 800]);
 
-const barXScale = d3.scaleLinear()
-    .domain([0, d3.max(averageHours, d => d.average)])
-    .range([0, 800]);
+        statisticsSVG.selectAll(".activity-bar")
+            .data(averageHours)
+            .enter().append("rect")
+            .attr("class", "activity-bar")
+            .attr("y", d => barYScale(d.activity))
+            .attr("width", d => barXScale(d.average))
+            .attr("height", barYScale.bandwidth())
+            .attr("fill", d => activityColors[d.activity]);
 
-statisticsSVG.selectAll(".activity-bar")
-    .data(averageHours)
-    .enter().append("rect")
-    .attr("class", "activity-bar")
-    .attr("y", d => barYScale(d.activity))
-    .attr("width", d => barXScale(d.average))
-    .attr("height", barYScale.bandwidth())
-    .attr("fill", d => activityColors[d.activity]);
+        // Add this for the labels on the bar chart
+        statisticsSVG.selectAll(".label")
+            .data(averageHours)
+            .enter().append("text")
+            .attr("class", "label")
+            .attr("y", d => barYScale(d.activity) + barYScale.bandwidth() / 2)
+            .attr("x", d => barXScale(d.average) + 5)
+            .attr("dy", ".35em")
+            .text(d => `${d.activity}: ${d.average.toFixed(2)} hours`);
 
-// Add this for the labels on the bar chart
-statisticsSVG.selectAll(".label")
-    .data(averageHours)
-    .enter().append("text")
-    .attr("class", "label")
-    .attr("y", d => barYScale(d.activity) + barYScale.bandwidth() / 2)
-    .attr("x", d => barXScale(d.average) + 5)
-    .attr("dy", ".35em")
-    .text(d => `${d.activity}: ${d.average.toFixed(2)} hours`);
-
-statisticsSVG.append("g")
-    .call(d3.axisLeft(barYScale));
+        statisticsSVG.append("g")
+            .call(d3.axisLeft(barYScale));
 
     </script>
 </body>
