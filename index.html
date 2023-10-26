@@ -1,92 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Weekly Schedule</title>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <style>
-        .bar {
-            fill: steelblue;
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .activity-bar {
+            fill-opacity: 0.7;
+            stroke: black;
+            stroke-width: 1;
         }
     </style>
 </head>
-
 <body>
-    <h2>Average Hours for Each Activity</h2>
-    <svg id="barchart" width="700" height="500"></svg>
-
-    <script>
-        const categories = [
-            { activity: 'gym', color: 'grey' },
-            { activity: 'chore', color: 'blue' },
-            { activity: 'research', color: 'green' },
-            { activity: 'eat+social', color: 'purple' },
-            { activity: 'in-transit', color: 'yellow' },
-            { activity: 'sleep', color: 'orange' },
-            { activity: 'meeting', color: 'red' },
-            { activity: 'class', color: 'cyan' },
-            { activity: 'tennis', color: 'magenta' },
-            { activity: 'eat', color: 'lime' },
-            { activity: 'social', color: 'pink' },
-            { activity: 'Instagram', color: 'brown' },
-            { activity: 'tv', color: 'black' }
-        ];
-
-        const scheduleData = [
-            { day: 'S', activities: [{ activity: 'gym', hours: 1 }, { activity: 'chore', hours: 2 }, { activity: 'research', hours: 8 }, { activity: 'eat+social', hours: 6 }, { activity: 'in-transit', hours: 1 }, { activity: 'sleep', hours: 6 }] },
-            // ... Add other days in a similar format
-            // Note: You can add other days data here
-        ];
-
-        const avgHours = categories.map(cat => {
-            let totalHours = 0;
-            scheduleData.forEach(day => {
-                day.activities.forEach(activity => {
-                    if (activity.activity === cat.activity) {
-                        totalHours += activity.hours;
-                    }
-                });
-            });
-            return { activity: cat.activity, hours: totalHours / scheduleData.length };
-        });
-
-        const xScale = d3.scaleBand().range([0, 700]).padding(0.4);
-        const yScale = d3.scaleLinear().range([500, 0]);
-
-        xScale.domain(avgHours.map(d => d.activity));
-        yScale.domain([0, d3.max(avgHours, d => d.hours)]);
-
-        const chart = d3.select("#barchart");
-        const barWidth = 700 / avgHours.length;
-
-        chart.selectAll(".bar")
-            .data(avgHours)
-            .enter().append("rect")
-            .attr("class", "bar")
-            .attr("x", d => xScale(d.activity))
-            .attr("y", d => yScale(d.hours))
-            .attr("width", xScale.bandwidth())
-            .attr("height", d => 500 - yScale(d.hours))
-            .attr("fill", d => categories.find(cat => cat.activity === d.activity).color);
-
-        chart.selectAll(".text")
-            .data(avgHours)
-            .enter().append("text")
-            .attr("x", d => xScale(d.activity) + xScale.bandwidth() / 2)
-            .attr("y", d => yScale(d.hours) - 10)
-            .attr("text-anchor", "middle")
-            .text(d => d.activity);
-
-        chart.append("g")
-            .attr("transform", "translate(0," + 500 + ")")
-            .call(d3.axisBottom(xScale));
-
-        chart.append("g")
-            .call(d3.axisLeft(yScale));
-    </script>
+    <h1>My Weekly Schedule</h1>
+    <div id="schedule"></div>
+    <h2>Average Hours Per Activity</h2>
+    <div id="statistics"></div>
+    <script src="script.js"></script>
 </body>
-
 </html>
