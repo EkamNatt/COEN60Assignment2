@@ -26,101 +26,119 @@
     <div id="statistics"></div>
 
     <script>
-        const width = 900;
-        const height = 300;
-        const dayHeight = height / 7; 
-
-        const activities = [
-            { name: 'sleep', color: 'grey' },
-            { name: 'study', color: 'blue' },
-            { name: 'play', color: 'green' },
-            { name: 'exercise', color: 'purple' },
-            { name: 'social', color: 'yellow' },
-            { name: 'eat', color: 'orange' },
-            { name: 'gym', color: '#FFA500' },
-            { name: 'chore', color: '#FF4500' },
-            { name: 'research', color: '#2E8B57' },
-            { name: 'eat+social', color: '#8B4513' },
-            { name: 'in-transit', color: '#DB7093' },
-            { name: 'meeting', color: '#7B68EE' },
-            { name: 'class', color: '#00CED1' },
-            { name: 'tennis', color: '#3CB371' }
-        ];
+        const activityColors = {
+            sleep: "grey",
+            study: "blue",
+            play: "green",
+            exercise: "purple",
+            social: "yellow",
+            eat: "orange",
+            gym: "red",
+            chore: "cyan",
+            research: "brown",
+            "eat+social": "pink",
+            "in-transit": "magenta",
+            tennis: "lime",
+            meeting: "coral",
+            class: "royalblue",
+            instagram: "silver",
+            tv: "gold"
+        };
 
         const scheduleData = [
-            { day: 'Sunday', activities: { gym: 1, chore: 2, research: 8, "eat+social": 6, "in-transit": 1, sleep: 6 } },
-            { day: 'Monday', activities: { meeting: 2, class: 3, research: 8, tennis: 1, eat: 1, social: 1, "in-transit": 1, sleep: 7 } },
+            { day: 'Sunday', activities: { gym: 1, chore: 2, research: 8, "eat+social": 6, "in-transit": 1, sleep: 6, study: 3, play: 2, exercise: 1 } },
+            { day: 'Monday', activities: { meeting: 2, class: 3, research: 8, tennis: 1, eat: 1, social: 1, "in-transit": 1, sleep: 7, study: 2, play: 1, exercise: 2 } },
+            // Add more days as needed
         ];
 
-        // Create SVG element for schedule
-        const svgSchedule = d3.select("#schedule").append("svg")
-            .attr("width", width)
-            .attr("height", height);
+        const scheduleSVG = d3.select("#schedule")
+            .append("svg")
+            .attr("width", 800)
+            .attr("height", 200);
 
-        // Process and render the schedule data
-        scheduleData.forEach((dayData, dayIndex) => {
-            let xOffset = 0;
-            for (const activity in dayData.activities) {
-                const activityData = activities.find(a => a.name === activity);
-                const activityWidth = (dayData.activities[activity] / 24) * width;
+        const statisticsSVG = d3.select("#statistics")
+            .append("svg")
+            .attr("width", 800)
+            .attr("height", 400);
 
-                svgSchedule.append("rect")
-                    .attr("x", xOffset)
-                    .attr("y", dayHeight * dayIndex)
-                    .attr("width", activityWidth)
-                    .attr("height", dayHeight)
-                    .attr("fill", activityData.color)
-                    .attr("class", "activity-bar");
+        // Display the schedule
+        const yScale = d3.scaleBand()
+            .domain(scheduleData.map(d => d.day))
+            .range([0, 200])
+            .padding(0.1);
 
-                xOffset += activityWidth;
+        const xScale = d3.scaleLinear()
+            .domain([0, 24])
+            .range([0, 800]);
+
+        scheduleSVG.selectAll("g")
+            .data(scheduleData)
+            .enter().append("g")
+            .attr("transform", d => `translate(0, ${yScale(d.day)})`)
+            .each(function (dayData) {
+                let xPosition = 0;
+
+                for (let activity in dayData.activities) {
+                    const hours = dayData.activities[activity];
+
+                    d3.select(this).append("rect")
+                        .attr("class", "activity-bar")
+                        .attr("x", xPosition)
+                        .attr("width", xScale(hours))
+                        .attr("height", yScale.bandwidth())
+                        .attr("fill", activityColors[activity]);
+
+                    xPosition += xScale(hours);
+                }
+            });
+
+        scheduleSVG.append("g")
+            .call(d3.axisLeft(yScale));
+
+        // Calculate average hours per activity
+        const activityTotals = {};
+        const activityCounts = {};
+
+        scheduleData.forEach(day => {
+            for (let activity in day.activities) {
+                if (!activityTotals[activity]) {
+                    activityTotals[activity] = 0;
+                    activityCounts[activity] = 0;
+                }
+                activityTotals[activity] += day.activities[activity];
+                activityCounts[activity] += 1;
             }
-
-            svgSchedule.append("text")
-                .attr("x", 10)
-                .attr("y", dayHeight * dayIndex + (dayHeight / 2) + 5)
-                .text(dayData.day);
         });
 
-        // Bar chart statistics
-        const svgStats = d3.select("#statistics").append("svg")
-            .attr("width", width)
-            .attr("height", height);
-
-        let activityTotals = {};
-
-        activities.forEach(activity => {
-            activityTotals[activity.name] = 0;
-        });
-
-        scheduleData.forEach(dayData => {
-            for (const activity in dayData.activities) {
-                activityTotals[activity] += dayData.activities[activity];
-            }
-        });
-
-        let yOffset = 0;
-        const barWidth = 30;
-        const barSpacing = 40;
-
-        for (const activity in activityTotals) {
-            const activityData = activities.find(a => a.name === activity);
-
-            svgStats.append("rect")
-                .attr("x", yOffset)
-                .attr("y", height - activityTotals[activity] * 10)
-                .attr("width", barWidth)
-                .attr("height", activityTotals[activity] * 10)
-                .attr("fill", activityData.color)
-                .attr("class", "activity-bar");
-
-            svgStats.append("text")
-                .attr("x", yOffset + barWidth / 2)
-                .attr("y", height - activityTotals[activity] * 10 - 5)
-                .attr("text-anchor", "middle")
-                .text(activity);
-
-            yOffset += barSpacing;
+        const averageHours = [];
+        for (let activity in activityTotals) {
+            averageHours.push({
+                activity: activity,
+                average: activityTotals[activity] / activityCounts[activity]
+            });
         }
+
+        // Display the bar chart
+        const barYScale = d3.scaleBand()
+            .domain(averageHours.map(d => d.activity))
+            .range([0, 400])
+            .padding(0.1);
+
+        const barXScale = d3.scaleLinear()
+            .domain([0, d3.max(averageHours, d => d.average)])
+            .range([0, 800]);
+
+        statisticsSVG.selectAll(".activity-bar")
+            .data(averageHours)
+            .enter().append("rect")
+            .attr("class", "activity-bar")
+            .attr("y", d => barYScale(d.activity))
+            .attr("width", d => barXScale(d.average))
+            .attr("height", barYScale.bandwidth())
+            .attr("fill", d => activityColors[d.activity]);
+
+        statisticsSVG.append("g")
+            .call(d3.axisLeft(barYScale));
     </script>
 </body>
 
