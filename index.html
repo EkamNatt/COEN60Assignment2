@@ -37,11 +37,9 @@
 
         const scheduleData = [
             { day: 'S', activities: [{ activity: 'gym', hours: 1 }, { activity: 'chore', hours: 2 }, { activity: 'research', hours: 8 }, { activity: 'eat+social', hours: 6 }, { activity: 'in-transit', hours: 1 }, { activity: 'sleep', hours: 6 }] },
-            { day: 'M', activities: [{ activity: 'meeting', hours: 2 }, { activity: 'class', hours: 3 }, { activity: 'research', hours: 8 }, { activity: 'tennis', hours: 1 }, { activity: 'eat', hours: 1 }, { activity: 'social', hours: 1 }, { activity: 'in-transit', hours: 1 }, { activity: 'sleep', hours: 7 }] },
-            // Add other days in a similar format
+            // ... Add other days in a similar format
+            // Note: You can add other days data here
         ];
-
-        // ... Add other days in a similar format
 
         const avgHours = categories.map(cat => {
             let totalHours = 0;
@@ -80,7 +78,7 @@
             .attr("x", d => xScale(d.activity) + xScale.bandwidth() / 2)
             .attr("y", d => yScale(d.hours) - 10)
             .attr("text-anchor", "middle")
-            .text(d => d.hours.toFixed(1));
+            .text(d => d.activity);
 
         chart.append("g")
             .attr("transform", "translate(0," + 500 + ")")
@@ -88,25 +86,6 @@
 
         chart.append("g")
             .call(d3.axisLeft(yScale));
-
-        const legend = chart.append("g")
-            .attr("transform", "translate(50,20)")
-            .selectAll("g")
-            .data(categories)
-            .enter().append("g")
-            .attr("transform", (d, i) => `translate(${i * 50},0)`);
-
-        legend.append("rect")
-            .attr("width", 18)
-            .attr("height", 18)
-            .attr("fill", d => d.color);
-
-        legend.append("text")
-            .attr("x", 24)
-            .attr("y", 9)
-            .attr("dy", ".35em")
-            .text(d => d.activity);
-
     </script>
 </body>
 
