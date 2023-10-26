@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,118 +18,110 @@
         }
     </style>
 </head>
+
 <body>
     <h1>My Weekly Schedule</h1>
     <div id="schedule"></div>
     <h2>Average Hours Per Activity</h2>
     <div id="statistics"></div>
+
     <script>
+        const width = 900;
+        const height = 300;
+        const dayHeight = height / 7; 
+
         const activities = [
             { name: 'sleep', color: 'grey' },
             { name: 'study', color: 'blue' },
             { name: 'play', color: 'green' },
             { name: 'exercise', color: 'purple' },
             { name: 'social', color: 'yellow' },
-            { name: 'eat', color: 'orange' }
+            { name: 'eat', color: 'orange' },
+            { name: 'gym', color: '#FFA500' },
+            { name: 'chore', color: '#FF4500' },
+            { name: 'research', color: '#2E8B57' },
+            { name: 'eat+social', color: '#8B4513' },
+            { name: 'in-transit', color: '#DB7093' },
+            { name: 'meeting', color: '#7B68EE' },
+            { name: 'class', color: '#00CED1' },
+            { name: 'tennis', color: '#3CB371' }
         ];
 
-        const weeklySchedule = {
-            'Sunday': { 'gym': 1, 'chore': 2, 'research': 8, 'eat+social': 6, 'in-transit': 1, 'sleep': 6 },
-            'Monday': { 'meeting': 2, 'class': 3, 'research': 8, 'tennis': 1, 'eat': 1, 'social': 1, 'in-transit': 1, 'sleep': 7 },
-            // ... add other days as per your example
-        };
+        const scheduleData = [
+            { day: 'Sunday', activities: { gym: 1, chore: 2, research: 8, "eat+social": 6, "in-transit": 1, sleep: 6 } },
+            { day: 'Monday', activities: { meeting: 2, class: 3, research: 8, tennis: 1, eat: 1, social: 1, "in-transit": 1, sleep: 7 } },
+        ];
 
-        const width = 800;
-        const height = 300;
-        const svg = d3.select("#schedule").append("svg").attr("width", width).attr("height", height);
-        const totalHours = 24;
-        const scaleX = d3.scaleLinear().domain([0, totalHours]).range([0, width]);
-        const barHeight = height / Object.keys(weeklySchedule).length;
+        // Create SVG element for schedule
+        const svgSchedule = d3.select("#schedule").append("svg")
+            .attr("width", width)
+            .attr("height", height);
 
-        let yOffset = 0;
-
-        Object.keys(weeklySchedule).forEach((day, dayIndex) => {
+        // Process and render the schedule data
+        scheduleData.forEach((dayData, dayIndex) => {
             let xOffset = 0;
+            for (const activity in dayData.activities) {
+                const activityData = activities.find(a => a.name === activity);
+                const activityWidth = (dayData.activities[activity] / 24) * width;
 
-            Object.entries(weeklySchedule[day]).forEach(([activity, hours]) => {
-                const color = activities.find(a => a.name === activity)?.color || 'black';
-                const rect = svg.append('rect')
-                    .attr('x', xOffset)
-                    .attr('y', yOffset)
-                    .attr('width', scaleX(hours))
-                    .attr('height', barHeight - 1)
-                    .attr('fill', color)
-                    .attr('class', 'activity-bar');
+                svgSchedule.append("rect")
+                    .attr("x", xOffset)
+                    .attr("y", dayHeight * dayIndex)
+                    .attr("width", activityWidth)
+                    .attr("height", dayHeight)
+                    .attr("fill", activityData.color)
+                    .attr("class", "activity-bar");
 
-                rect.on('mouseover', function() {
-                    d3.select(this).attr('fill-opacity', 0.5);
-                    svg.append('text')
-                        .attr('id', 'tooltip')
-                        .attr('x', xOffset + 5)
-                        .attr('y', yOffset + 15)
-                        .text(`${activity}: ${hours} hours`)
-                        .attr('font-size', '12px');
-                });
+                xOffset += activityWidth;
+            }
 
-                rect.on('mouseout', function() {
-                    d3.select(this).attr('fill-opacity', 1);
-                    d3.select('#tooltip').remove();
-                });
-                
-                xOffset += scaleX(hours);
-            });
-
-            svg.append('text')
-                .attr('x', 5)
-                .attr('y', yOffset + 15)
-                .text(day)
-                .attr('font-size', '12px')
-                .attr('font-weight', 'bold');
-
-            yOffset += barHeight;
+            svgSchedule.append("text")
+                .attr("x", 10)
+                .attr("y", dayHeight * dayIndex + (dayHeight / 2) + 5)
+                .text(dayData.day);
         });
+
+        // Bar chart statistics
+        const svgStats = d3.select("#statistics").append("svg")
+            .attr("width", width)
+            .attr("height", height);
 
         let activityTotals = {};
 
-        Object.keys(weeklySchedule).forEach(day => {
-            Object.entries(weeklySchedule[day]).forEach(([activity, hours]) => {
-                if (!activityTotals[activity]) {
-                    activityTotals[activity] = 0;
-                }
-                activityTotals[activity] += hours;
-            });
+        activities.forEach(activity => {
+            activityTotals[activity.name] = 0;
         });
 
-        let activityAverages = {};
-
-        Object.keys(activityTotals).forEach(activity => {
-            activityAverages[activity] = activityTotals[activity] / 7;
+        scheduleData.forEach(dayData => {
+            for (const activity in dayData.activities) {
+                activityTotals[activity] += dayData.activities[activity];
+            }
         });
 
-        const statsSvg = d3.select("#statistics").append("svg").attr("width", width).attr("height", 200);
-        const scaleY = d3.scaleLinear().domain([0, d3.max(Object.values(activityAverages))]).range([0, 150]);
+        let yOffset = 0;
+        const barWidth = 30;
+        const barSpacing = 40;
 
-        let statsXOffset = 0;
-        const statsBarWidth = width / Object.keys(activityAverages).length;
+        for (const activity in activityTotals) {
+            const activityData = activities.find(a => a.name === activity);
 
-        Object.entries(activityAverages).forEach(([activity, average]) => {
-            const color = activities.find(a => a.name === activity)?.color || 'black';
-            statsSvg.append('rect')
-                .attr('x', statsXOffset)
-                .attr('y', 150 - scaleY(average))
-                .attr('width', statsBarWidth - 5)
-                .attr('height', scaleY(average))
-                .attr('fill', color)
-                .attr('class', 'activity-bar');
+            svgStats.append("rect")
+                .attr("x", yOffset)
+                .attr("y", height - activityTotals[activity] * 10)
+                .attr("width", barWidth)
+                .attr("height", activityTotals[activity] * 10)
+                .attr("fill", activityData.color)
+                .attr("class", "activity-bar");
 
-            statsSvg.append('text')
-                .attr('x', statsXOffset + 5)
-                .attr('y', 165)
-                .text(activity)
-                .attr('font-size', '10px');
+            svgStats.append("text")
+                .attr("x", yOffset + barWidth / 2)
+                .attr("y", height - activityTotals[activity] * 10 - 5)
+                .attr("text-anchor", "middle")
+                .text(activity);
 
-            statsXOffset += statsBarWidth;
-        });
+            yOffset += barSpacing;
+        }
     </script>
 </body>
+
 </html>
