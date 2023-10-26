@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Weekly Schedule</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <style>
+        .bar {
+            fill: steelblue;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="schedule"></div>
+    <h2>Average Hours for Each Activity</h2>
+    <svg id="barchart" width="600" height="400"></svg>
+
+    <script>
+        const categories = [
+            { activity: 'sleep', color: 'grey' },
+            { activity: 'study', color: 'blue' },
+            { activity: 'play', color: 'green' },
+            { activity: 'exercise', color: 'purple' },
+            { activity: 'social', color: 'yellow' },
+            { activity: 'eat', color: 'orange' }
+        ];
+
+        const scheduleData = [
+            { day: 'S', activities: [{ activity: 'sleep', hours: 6 }, { activity: 'study', hours: 3 }, { activity: 'play', hours: 5 }, { activity: 'exercise', hours: 1 }, { activity: 'social', hours: 4 }, { activity: 'eat', hours: 5 }] },
+            // Add other days in a similar format
+        ];
+
+        const svgWidth = 600;
+        const svgHeight = 100;
+
+        const svg = d3.select("#schedule")
+            .selectAll("svg")
+            .data(scheduleData)
+            .enter()
+            .append("svg")
+            .attr("width", svgWidth)
+            .attr("height", svgHeight);
+
+        svg.each(function (d, i) {
+            let x = 0;
+            d3.select(this).selectAll("rect")
+                .data(d.activities)
+                .enter()
+                .append("rect")
+                .attr("x", function (activity) {
+                    let currentX = x;
+                    x += activity.hours * (svgWidth / 24);  // Assuming a 24 hour day
+                    return currentX;
+                })
+                .attr("y", 0)
+                .attr("width", function (activity) { return activity.hours * (svgWidth / 24); })
+                .attr("height", svgHeight)
+                .attr("fill", function (activity) {
+                    return categories.find(cat => cat.activity === activity.activity).color;
+                });
+        });
+
+        // Bar chart for average hours
+        const avgHours = categories.map(cat => {
+            let totalHours = 0;
+            scheduleData.forEach(day => {
+                day.activities.forEach(activity => {
+                    if (activity.activity === cat.activity) {
+                        totalHours += activity.hours;
+                    }
+                });
+            });
+            return { activity: cat.activity, hours: totalHours / scheduleData.length };
+        });
+
+        const xScale = d3.scaleBand().range([0, 600]).padding(0.4);
+        const yScale = d3.scaleLinear().range([400, 0]);
+
+        xScale.domain(avgHours.map(d => d.activity));
+        yScale.domain([0, d3.max(avgHours, d => d.hours)]);
+
+        const chart = d3.select("#barchart");
+        const barWidth = svgWidth / avgHours.length;
+
+        chart.selectAll(".bar")
+            .data(avgHours)
+            .enter().append("rect")
+            .attr("class", "bar")
+            .attr("x", d => xScale(d.activity))
+            .attr("y", d => yScale(d.hours))
+            .attr("width", xScale.bandwidth())
+            .attr("height", d => 400 - yScale(d.hours))
+            .attr("fill", d => categories.find(cat => cat.activity === d.activity).color);
+
+        chart.append("g")
+            .attr("transform", "translate(0," + 400 + ")")
+            .call(d3.axisBottom(xScale));
+
+        chart.append("g")
+            .call(d3.axisLeft(yScale));
+
+    </script>
+</body>
+
+</html>
